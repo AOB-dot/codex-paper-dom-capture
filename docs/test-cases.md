@@ -159,7 +159,66 @@ Findings from the test:
 - Graphik was unavailable in Paper and Inter was used as fallback.
 - Inter fallback changed button label wrapping, so text boxes needed targeted widening while preserving measured button positions.
 - Mobile rendered the source text typo `Weclome to the`; the capture preserved the rendered DOM text rather than correcting it.
+- A later fidelity review found the first capture was still too simplified in the final CTA/footer blend:
+  - newsletter helper text wrapped even though the source was one line
+  - the CTA button missed its nested diagonal arrow box
+  - the Bounti logo was missing because the SVG symbol reference was not resolved
+  - footer heading weights looked too light because the fallback used computed `400` instead of the family-name weight
+  - Company, Industries, Security, and their items were omitted
+  - the bottom hairline divider was omitted
+  - Imprint and Privacy Policy were darker than the copyright text but were not separated correctly
+  - X and LinkedIn belonged on the right edge, not next to the legal links
+  - the gap between the decorative `excellence` word treatment and CTA was too large
 
 Skill lesson:
 
 When a browser comment selector captures a broad DOM root, report that breadth and preserve the measured root unless the user explicitly wants a narrower visual slice.
+
+Strict capture must use a layer inventory rather than a manual simplification pass. Dense footer sections need explicit checks for logos, SVG `<use>` symbols, button anatomy, column completeness, single-line text, legal/social alignment lanes, hairline dividers, and fallback font weights.
+
+## Bounti Training Management Benefits Cards
+
+URL:
+
+`https://bounti.co/solutions/uses/training-management-software`
+
+Selector observed from browser comment:
+
+`div#main > div.framer-NckkP.framer-tibgww:nth-of-type(1) > div.framer-1iwvcmh:nth-of-type(5)`
+
+Reason it mattered:
+
+- rounded benefits section with centered heading and bullet list
+- horizontally overflowing card carousel on laptop/tablet
+- stacked card layout on mobile
+- title chips over media/cards
+- card-specific image crops
+- floating callouts inside cards, including a sent-to style box over the automations image
+- translation card with language selectors, divider, overlay panel, and multiple small SVG/icon details
+
+Misses found in the first capture:
+
+- Laptop title chips such as `Personalised learning paths` were visually off in placement.
+- The automations card background image crop/placement was off.
+- The sent-to box over the automations image was missing.
+- `Automatically translate courses to multiple languages for a diverse audience.` wrapped to three lines in Paper, while the source rendered it as two lines.
+- Dense vector/pill content inside a card was simplified without enough up-front reporting.
+
+Skill lesson:
+
+Section-level inventory is not enough for repeated marketing cards. The skill must run a card-internal fidelity gate that checks media crop/object-position, title-chip coordinates, overlay callouts, language/progress controls, line counts for descriptions, and visible carousel edge crops.
+
+Misses found in the follow-up laptop-only capture:
+
+- The main heading had the same number of lines, but the word `Training` moved from the end of the first line to the beginning of the second line.
+- The card label chips were rendered as title case in Paper even though the source visual used uppercase labels.
+- The card label chips lost the blurred/frosted iced surface treatment and looked like plain flat translucent boxes.
+- The automations card image still had incorrect visible subject placement after copying the source image URL and CSS object-position.
+
+Additional skill lessons:
+
+- Text QA must compare per-line word membership, not only the number of rendered lines.
+- The extractor must preserve rendered casing and `text-transform`, especially for chips, labels, nav items, and card labels.
+- Frosted/glass chips require explicit extraction of alpha fills, gradients, filters, backdrop filters, borders, shadows, and pseudo-elements.
+- Media crop QA needs source-vs-Paper visual comparison. Copied `object-fit`/`object-position` values are not sufficient if Paper renders the asset crop differently.
+- The capture is not complete until the final Paper screenshot is compared against the live source at the same viewport and the mismatches are either fixed or reported.
