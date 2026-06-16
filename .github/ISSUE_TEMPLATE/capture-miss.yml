@@ -1,0 +1,68 @@
+name: Capture fidelity miss
+description: Report a DOM-to-Paper capture detail that the skill missed.
+title: "[miss]: "
+labels: ["capture-miss"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve capture fidelity. Please avoid private project names, personal paths, credentials, or proprietary design files.
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+      description: Public URL or synthetic fixture where the miss can be reproduced.
+      placeholder: https://example.com/page
+    validations:
+      required: true
+  - type: input
+    id: selector
+    attributes:
+      label: Selector
+      description: Target selector for the captured section.
+      placeholder: section#product
+    validations:
+      required: true
+  - type: dropdown
+    id: viewport
+    attributes:
+      label: Viewport
+      options:
+        - Laptop L 1440x900
+        - Samsung Galaxy S24 Ultra 384x824
+        - iPad Air portrait 820x1180
+        - iPad Air landscape 1180x820
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Miss category
+      options:
+        - layout/order
+        - typography/wrapping
+        - image crop/object-fit
+        - background/effective color
+        - border/radius/stroke
+        - shadow/filter
+        - gradient/blend mode
+        - pseudo-element
+        - SVG/icon
+        - responsive breakpoint
+        - interactive/hover state
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What was missed?
+      description: Describe the visible mismatch and what the correct source rendering looked like.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add screenshots, extracted style snippets, pseudo-element details, or notes about where the detail exists in the DOM/CSS.
