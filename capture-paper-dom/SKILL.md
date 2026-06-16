@@ -74,17 +74,18 @@ For each device variant:
 
 1. Create an artboard at the measured section size, using the effective computed background.
 2. Add one top-level measured wrapper frame.
-3. Add the major background surfaces and cards.
-4. Add images/SVGs at measured positions.
-5. Add text as editable text layers with computed styles.
-6. Split mixed-opacity or mixed-color text into separate editable layers when Paper cannot preserve inline spans cleanly.
-7. Add a micro-elements pass:
+3. Add full-bleed or large background media first, such as hero photos or section-wide videos/images.
+4. Add overlay surfaces and cards above the background media, such as buttons, glass panels, footer trays, and nav bars.
+5. Add smaller images/SVGs at measured positions, such as logos, badges, icons, and decorative text treatments.
+6. Add text as editable text layers with computed styles.
+7. Split mixed-opacity or mixed-color text into separate editable layers when Paper cannot preserve inline spans cleanly.
+8. Add a micro-elements pass:
    - Check separators between adjacent text groups such as rating/review clusters.
    - Check selected and unselected option controls inside cards, including empty radio circles.
    - Check discount pills, small badges, stars, bullets, and state markers.
    - Check shine/shading overlays on swatches, pills, and buttons, including `::before` / `::after` gradients.
-8. Screenshot the artboard and compare against the live browser view.
-9. Fix visible mismatches with targeted style updates.
+9. Screenshot the artboard and compare against the live browser view.
+10. Fix visible mismatches with targeted style updates.
 
 ## Known Snags
 
@@ -92,6 +93,8 @@ For each device variant:
 - Some sites shadow browser globals such as numeric parsing helpers. Use explicit `Number(String(value).replace("px", ""))` style conversion in page `evaluate` code.
 - DOM extraction may produce both useful leaf text and noisy aggregate container text. Filter aggregate text, but preserve tiny non-text UI controls.
 - Paper font fallback can change text wrapping. Prefer measured positions, then widen text boxes or reduce size only enough to match the source layout.
+- A browser comment selector can point to a broader DOM root than the visible outlined region implies. If the selected root includes below-fold content such as a footer, product list, or newsletter area, capture the measured root unless the user narrows the request, and mention the selector breadth in the completion message.
+- Stacking order matters for image-led sections. If a hero image spans most of the selected root, add it before overlay cards, buttons, and footer panels so it does not cover those surfaces.
 
 ## Browser Setup Reminder
 
@@ -113,4 +116,5 @@ Report:
 - Which three device variants were created.
 - The effective computed background color used.
 - Any unavailable source fonts and fallbacks.
+- Whether the selected DOM root included additional below-fold content beyond the visible marker screenshot.
 - Any known limitation such as video/canvas/WebGL content, clipped offscreen animation states, or remote assets Paper could not render.

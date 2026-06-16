@@ -133,3 +133,33 @@ Implementation lesson:
 
 The extraction must inspect pseudo-elements even when they have no text. Decorative pseudo-elements can carry important surface fidelity.
 
+## Bounti Employee Training Hero/Footer Section
+
+URL:
+
+`https://bounti.co/product/employee-training-platform`
+
+Selector observed from browser comment:
+
+`div#main > div.framer-Dqmvx.framer-0jGo1:nth-of-type(1) > div.framer-d0dh3w:nth-of-type(11)`
+
+Reason it mattered:
+
+- image-led hero with a large rounded photo
+- editable headline layered over a decorative SVG word treatment
+- CTA button shadow and rounded shape
+- footer/newsletter panel overlapping the hero image
+- responsive layout changes from desktop footer columns to mobile product cards
+- selected root included below-fold content beyond the visible browser marker screenshot
+
+Findings from the test:
+
+- The initial Paper build put overlay surfaces before the full hero image, so the image covered the footer and buttons.
+- The skill now says to add full-bleed or section-wide media before overlay surfaces.
+- Graphik was unavailable in Paper and Inter was used as fallback.
+- Inter fallback changed button label wrapping, so text boxes needed targeted widening while preserving measured button positions.
+- Mobile rendered the source text typo `Weclome to the`; the capture preserved the rendered DOM text rather than correcting it.
+
+Skill lesson:
+
+When a browser comment selector captures a broad DOM root, report that breadth and preserve the measured root unless the user explicitly wants a narrower visual slice.

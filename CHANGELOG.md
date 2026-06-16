@@ -16,3 +16,7 @@
   - empty selector controls
   - tiny divider lines
   - font fallback wrapping issues
+- Added post-release test notes from the Bounti employee training hero/footer capture:
+  - add large background media before overlay surfaces
+  - report when a selected DOM root includes below-fold content
+  - widen text boxes when font fallback wraps button labels
