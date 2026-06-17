@@ -4,7 +4,7 @@ High-fidelity editable DOM-to-design capture using the Codex in-app browser and 
 
 `capture-paper-dom` is a Codex skill for recreating live webpage sections as editable frames in Paper.design. It uses Codex's controllable in-app browser to inspect the rendered DOM, extract computed styles, and write structured layers into a design canvas instead of flattening the result into a screenshot.
 
-This is version `0.1`: a working public seed, documented from real capture work, intended to improve through practical misses and repeatable test cases.
+This is version `0.3`: a public skill package with selectable strict and placeholder/scaffold capture modes, documented from real capture work and intended to improve through practical misses and repeatable test cases.
 
 ## Why This Exists
 
@@ -57,7 +57,7 @@ The final output should be editable Paper layers. Screenshots are used for QA an
 Unless the user asks otherwise, captures produce three variants:
 
 - Laptop L: `1440 x 900`
-- Samsung Galaxy S24 Ultra mobile: `384 x 824`
+- Samsung Galaxy S24 Ultra mobile: `430 x 932`
 - iPad Air portrait: `820 x 1180`
 
 iPad Air landscape, `1180 x 820`, can be added when the section is clearly landscape-led.
@@ -74,6 +74,14 @@ cp -R capture-paper-dom ~/.codex/skills/
 Then start a new Codex session and ask to use `$capture-paper-dom` against a selected browser section.
 
 The root `capture-paper-dom/` folder is the installable Codex skill. Project-level docs, issue templates, and release notes live outside that folder so the skill stays small enough to load efficiently.
+
+## Selectable Capture Modes
+
+The default skill is strict unless placeholders are explicitly requested:
+
+- `$capture-paper-dom`: shared workflow, strict by default.
+- `$capture-paper-dom-strict`: force exact source capture with real source images, SVGs, logos, media, and micro-details.
+- `$capture-paper-dom-placeholder`: force structure-first scaffold capture for reusable section libraries and future brand replacement. Source-specific assets become measured placeholders with nearby source-reference evidence.
 
 ## Requirements
 
@@ -98,7 +106,7 @@ This repository intentionally excludes private project names, local filesystem p
 
 ## Status
 
-`v0.1` is a working skill and documentation seed. The near-term roadmap is to make captures more repeatable with capture reports, saved style snapshots, and a regression suite around known fidelity traps.
+`v0.3` is a working skill package with strict, placeholder/scaffold, and chooser entrypoints. The near-term roadmap is to make captures more repeatable with capture reports, saved style snapshots, and a regression suite around known fidelity traps.
 
 ## License
 

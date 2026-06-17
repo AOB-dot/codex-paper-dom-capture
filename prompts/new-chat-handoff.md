@@ -33,7 +33,7 @@ Please first read:
 Important defaults:
 
 - Laptop L: `1440 x 900`
-- Samsung Galaxy S24 Ultra: `384 x 824`
+- Samsung Galaxy S24 Ultra: `430 x 932`
 - iPad Air portrait: `820 x 1180`
 - optional iPad Air landscape: `1180 x 820`
 

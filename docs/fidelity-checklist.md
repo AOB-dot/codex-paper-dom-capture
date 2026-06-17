@@ -2,15 +2,35 @@
 
 Use this checklist for every capture before calling the result done.
 
+## Capture Mode
+
+- Capture mode is declared before extraction: strict or placeholder/scaffold.
+- Strict mode is the default for `$capture-paper-dom`, exact DOM capture, and any request that says strict, exact, faithful, clone, no placeholders, or similar.
+- Strict mode preserves visible source-specific assets, including logos, product images, media, SVGs, wordmarks, swatches, badges, and decorative imagery. No visible source asset is replaced with a placeholder unless reported as an unavoidable limitation.
+- Strict mode preserves visible inline SVGs as actual SVG layers/assets first. Dense wordmark or swatch SVGs are not approximated with text until inline SVG insertion, isolated SVG writes, and SVG asset import have been tried and failed.
+- Placeholder/scaffold mode is used only by explicit request or `$capture-paper-dom-placeholder`.
+- Placeholder/scaffold mode keeps measured structure while replacing source-specific assets with role-labeled placeholders and nearby source-reference evidence.
+- If a user asks for strict capture inside a reusable-library project, strict wins for that capture.
+
 ## Layout
 
 - Target section dimensions match measured DOM rect.
+- If no annotation was provided, the chosen selector is the smallest complete DOM root for the planned section/state.
+- Component captures are cropped to the selected root/state boundary; no adjacent hero, footer, previous section, or next section pixels are included unless the capture explicitly asks for a combined transition.
+- Root boundary evidence is recorded for component captures: root rect, painted surface rect when different, visible previous/next sibling rects, and any fixed/sticky/portal layers intentionally included.
+- A boundary contamination check has passed: no black hero sliver below a header, previous-section tail above a card row, next-section strip below a drawer/menu, or other source-context pixels are present in the editable Paper artboard.
+- Source URL, selector, viewport, scroll position, and state recipe are recorded.
+- Requested viewport, `innerWidth`, `visualViewport`, document/client width, body width, root rect width, and scrollbar gutter are recorded. Standard target content widths are `1440`, `430`, and `820`; initial browser requests should be `1455`, `445`, and `835` to allow for the observed `15px` gutter.
+- If the measured content/root width misses the target width, the viewport request is adjusted and the DOM is re-extracted. Do not stretch a narrower Paper capture after extraction to make it look like the target width.
+- Paper artboards for section-library/component captures use the measured target content/root width, not the wider browser request width, unless a separate device shell/gutter context is intentionally represented.
+- Interactive state availability is verified per breakpoint; no-open or navigate-only behavior is recorded instead of inventing a missing menu/drawer/hover state.
 - Major content order matches the source.
 - Repeated cards preserve their original order.
 - Image/text pairings are not swapped.
 - Spacing and alignment use measured positions, not visual guesses.
 - Background surfaces extend to the same edges as the source.
 - Overflow and clipping match the source where visible.
+- If source context is needed for QA, it is kept in notes/screenshots rather than as editable Paper layers.
 
 ## Layer Inventory
 
@@ -23,7 +43,22 @@ Before building each variant, list the visible source inventory and check it off
 - Footer/nav columns preserve every heading and visible item.
 - Legal links, social links, and copyright text keep separate positions, colors, and alignment lanes.
 - Hairlines, separators, pseudo-elements, badges, bullets, stars, and empty controls are accounted for.
+- `opacity:0`, `display:none`, `visibility:hidden`, zero-area, clipped, or inactive carousel controls are not rendered as visible layers unless capturing a named active/open state.
 - No visually distinct source item is collapsed into a generic text block when it differs by position, color, weight, or alignment.
+
+## Placeholder/Scaffold Capture Mode
+
+Use this section only when the user explicitly wants a reusable library scaffold rather than an exact source clone.
+
+- The capture notes declare scaffold mode rather than strict asset mode.
+- Source-specific logos, product images, branded SVG wordmarks, illustrations, videos, or company media are represented as role-labeled placeholders when they will be replaced by the destination brand.
+- Each placeholder keeps the measured slot position, size, radius, crop, clipping, z-order, and aspect ratio from the source.
+- Placeholdered assets have visible source-reference evidence near the Paper capture, usually as one companion screenshot/reference strip per section or repeated card cluster outside the reusable scaffold artboard.
+- Individual close-up reference tiles are added only when a source asset treatment matters on its own, such as a special SVG/logo, video frame, unusual crop, frosted overlay, mask, or branded icon system.
+- Reference strips or tiles are labeled by role and source, and show enough original context to understand the asset, crop, mask, radius, video frame, SVG/logo detail, and overlay relationship.
+- No design element disappears just because its content is placeholdered; every logo/media/SVG slot remains visible and labeled.
+- Generic UI controls and micro-elements remain rendered normally, not placeholdered away.
+- The completion audit lists which assets were placeholdered, why, and where the source-reference strip or necessary close-up tile was placed.
 
 ## Backgrounds
 
@@ -54,6 +89,7 @@ Before building each variant, list the visible source inventory and check it off
 - If an image crop is wrong in Paper, wrap the image in a clipped frame and offset/scale it to match the rendered source crop.
 - Compare source and Paper card crops by visible subject placement, not only by copied CSS values.
 - Inline SVGs are copied directly.
+- Dense inline SVG wordmarks, swatches, and badges are preserved through actual SVG insertion/import before any approximation is allowed.
 - SVG `<use>` references are resolved from document `symbol`/`defs` content or replaced with actual visible paths. An unresolved blank logo or icon is not acceptable for strict capture.
 - Missing icon fonts are recreated with acceptable visible equivalents only when unavoidable.
 
@@ -173,6 +209,17 @@ Examples:
 - cart count badges
 - dropdown chevrons
 
+## Interactive States
+
+For menus, drawers, accordions, tabs, hover panels, and cart states:
+
+- State is opened/activated in the live in-app browser before extraction.
+- State recipe is recorded, such as click trigger, selected tab, filled cart setup, or expanded accordion.
+- Open surface is captured as its own named artboard or named group.
+- Trigger, overlay/scrim, drawer/menu panel, portal content, sticky/fixed positioning, and body scroll-lock effects are accounted for.
+- Empty and filled states are captured separately when visually different.
+- Quantity steppers, remove buttons, checkout buttons, disabled/enabled states, upsells, price rows, dividers, and shadows are preserved where relevant.
+
 ## Screenshot QA
 
 After building in Paper:
@@ -187,3 +234,14 @@ After building in Paper:
 - compare card media crops by visible focal point placement
 - patch with targeted edits
 - update this project with any repeated miss pattern
+
+## Skill Compliance Audit
+
+After each capture, check and record:
+
+- `capture-paper-dom` was explicitly used.
+- Required device variants were captured or the narrowing was user-requested.
+- Layer inventory was created before building.
+- Paper screenshot QA was performed against the live source.
+- Pseudo-elements, SVG `<use>`, image crops, micro-elements, and interactive state details were inspected.
+- Reusable misses were fixed in the skill or added to test notes.

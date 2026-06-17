@@ -176,6 +176,71 @@ When a browser comment selector captures a broad DOM root, report that breadth a
 
 Strict capture must use a layer inventory rather than a manual simplification pass. Dense footer sections need explicit checks for logos, SVG `<use>` symbols, button anatomy, column completeness, single-line text, legal/social alignment lanes, hairline dividers, and fallback font weights.
 
+## Dot Header Boundary Discipline
+
+URL:
+
+`https://dotcards.net/`
+
+Selector:
+
+`#shopify-section-header`
+
+Reason it mattered:
+
+- self-directed capture chose the correct closed header root but added a black rounded slice from the hero below as "source context"
+- the adjacent hero pixels were visible in the screenshot but were not part of the header component
+- mobile/tablet closed headers also tempted the capture to include the first visible hero edge below the sticky tray
+- the same page exposes off-canvas menu and drawer DOM inside or near the header subtree, so component/state boundaries must be explicit
+
+Skill lesson:
+
+For self-directed component captures, crop the Paper artboard to the selected root/state boundary. Do not include adjacent sibling sections, hero beginnings, previous-section tails, or comparison context as editable Paper layers unless the requested capture explicitly names a combined transition. Keep adjacent pixels only in source screenshots/notes for QA.
+
+Regression check:
+
+- Extract root rect and previous/next sibling rects at each breakpoint.
+- If the header is fixed/sticky or the DOM root is taller than the painted tray, capture the painted tray/header surface as the artboard boundary.
+- Paper QA fails if even a thin black hero strip appears under the closed header. The fix is to adjust selector, artboard height, clipping, or root/state boundary before moving on.
+
+## Dot Menu State Availability
+
+URL:
+
+`https://dotcards.net/`
+
+Observed behavior:
+
+- Desktop `Shop` is a normal link to `/collections/basics`; hover did not reveal a mega menu and click navigated to the collection page.
+- Mobile and tablet hamburger controls open a translucent menu surface with `Shop`, `Packs`, `Custom`, and `Platform` rows plus nested product cards.
+- Product-page desktop `Packs` hover opens a full dropdown state: the fixed header grows to a rounded white tray, the background page is dimmed/blurred, Packs receives the active underline, and the dropdown shows a `SAVE UP TO 25% / Buy in Bulk and Save` promo card plus visible `dot.bundle`, `dot.duos`, and `dot.cards` product cards.
+
+Skill lesson:
+
+Interactive capture plans must verify state availability per breakpoint and per nav item. If the requested state does not exist on one item but does exist on another, record that distinction. CSS inspection alone is not enough for hover states; use a hover-capable verification path and capture the full post-hover state before drawing.
+
+## Reusable Library Scaffold Asset Slots
+
+Source examples:
+
+- Dot cart drawer product cards
+- Dot mobile menu product cards
+- Bounti image/video-led storytelling cards
+
+Observed workflow need:
+
+- The destination library will replace source-specific logos, media, product renders, SVG wordmarks, and videos with destination-brand content.
+- Recreating every source-specific asset exactly slowed the capture without improving the reusable section structure.
+- The important reusable value is the measured layout, masks, surfaces, card anatomy, state behavior, and asset slot roles.
+
+Skill lesson:
+
+When the user explicitly asks for a reusable section library scaffold, preserve every measured asset slot but placeholder source-specific brand/media assets. Do not import exact Dot/Bounti logo and product SVG detail unless it is needed to understand the structure. Generic controls, button anatomy, dividers, shadows, card shells, and state layout remain strict DOM capture items.
+
+Follow-up scaffold rule:
+
+Placeholdered design assets need visible source-reference evidence on the Paper canvas without overwhelming the scaffold workflow. Put one labeled screenshot/reference strip near each scaffolded section or repeated card cluster, outside the reusable artboard when possible, so the destination scaffold stays clean while the original source visuals remain inspectable. Add individual close-up tiles only for special source treatments such as logos, unusual media crops, video frames, frosted overlays, masks, or branded icon systems.
+
 ## Bounti Training Management Benefits Cards
 
 URL:
@@ -222,3 +287,83 @@ Additional skill lessons:
 - Frosted/glass chips require explicit extraction of alpha fills, gradients, filters, backdrop filters, borders, shadows, and pseudo-elements.
 - Media crop QA needs source-vs-Paper visual comparison. Copied `object-fit`/`object-position` values are not sufficient if Paper renders the asset crop differently.
 - The capture is not complete until the final Paper screenshot is compared against the live source at the same viewport and the mismatches are either fixed or reported.
+
+## Strict vs Placeholder Mode Separation
+
+Source:
+
+`https://dotcards.net/`
+
+Representative selector:
+
+`section#shopify-section-template--20060300673199__home_collection_H3Ry7q`
+
+Scenario:
+
+During a section-library capture marathon, the workflow allowed placeholder/scaffold thinking to bleed into captures where the user wanted exact source DOM fidelity. The user then asked for the Dot `Shop Basics` section as a strict DOM capture while still working inside the broader section-library project.
+
+Expected behavior:
+
+- `$capture-paper-dom` remains strict by default unless the user explicitly asks for placeholders.
+- `$capture-paper-dom-strict` forces exact source capture even inside a reusable-library project.
+- `$capture-paper-dom-placeholder` is the only wrapper that forces placeholder/scaffold behavior.
+- If the user says strict, exact, faithful, clone, or no placeholders, source-specific Dot/Bounti assets must be preserved rather than converted into placeholders.
+- If placeholder mode is used, each placeholder requires nearby source-reference evidence.
+
+Skill lesson:
+
+Capture mode must be a first-class gate before extraction. Project context such as "section library" cannot silently override a strict capture request.
+
+## Browser Runtime DOM API Fallback
+
+Source:
+
+`https://dotcards.net/`
+
+Representative selector:
+
+`section#shopify-section-template--20060300673199__home_collection_H3Ry7q > div.presale.presale-home > div.presale-collections > div.presale-collection.basic:nth-of-type(1)`
+
+Scenario:
+
+During a strict Dot `Shop Basics` capture, the in-app browser read-only page scope threw errors for `NodeFilter`, `document.createTreeWalker`, and `document.createRange`.
+
+Expected behavior:
+
+- The extraction does not stop merely because those DOM helpers are unavailable.
+- Text traversal falls back to recursive `childNodes` and `nodeType === 3`.
+- If `createRange()` is unavailable, rendered text line geometry falls back to visible leaf text element rectangles.
+- The completion audit records that line membership used fallback extraction and must be verified visually against source/Paper screenshots.
+
+Skill lesson:
+
+The capture script should use progressive DOM API fallbacks because the Browser plugin page scope can be more restricted than a normal page console.
+
+## Dot Shop Basics: Dense SVG And Hidden Carousel Controls
+
+Source:
+
+`https://dotcards.net/`
+
+Representative selector:
+
+`section#shopify-section-template--20060300673199__home_collection_H3Ry7q > div.presale.presale-home > div.presale-collections > div.presale-collection.basic:nth-of-type(1)`
+
+Findings from the strict capture:
+
+- The Dot product wordmarks and swatch rows were available as inline SVGs with no unresolved `<use>` references.
+- Rebuilding those wordmarks as editable text was a strict-mode miss. Dense inline SVG paths should be preserved as SVG layers/assets first.
+- The carousel right-arrow controls were present in the DOM with `display:flex`, but computed `opacity:0`. Capturing them as visible grey arrows created extra background arrows in the Paper desktop/mobile frames.
+- The initial `1440`, `430`, and `820` browser viewport requests all produced content/root widths that were `15px` narrower because the browser reserved a scrollbar gutter. For target capture widths of `1440`, `430`, and `820`, the in-app browser needed initial requests of `1455`, `445`, and `835`.
+- The mobile `Give The Gift Of Networking` card was a special expanded gift-card layout, not a normal product card. It needed a two-line source heading, actual `gift.card` SVG mark, rainbow strip, separate `Starting at`/price spans, and a top-right image crop. Reusing the normal product-card template missed those details.
+
+Expected behavior:
+
+- Strict mode tries direct inline SVG insertion, isolated per-SVG writes, or local SVG asset import before any wordmark/swatch approximation.
+- `opacity:0`, `display:none`, `visibility:hidden`, zero-area, clipped, or inactive carousel controls are excluded from visible Paper layers unless the requested state explicitly shows them.
+- Capture notes distinguish requested viewport size from measured visual/content/root size. For the standard breakpoints, request `1455`, `445`, and `835` first so the measured content/root widths land at `1440`, `430`, and `820`. If the measured gutter differs, adjust the requested viewport and re-extract instead of stretching an already captured narrower frame.
+- Repeated-card QA must branch by card type. Promo/gift/upsell/featured cards inside a product grid get their own internal inventory instead of inheriting the neighboring product-card anatomy.
+
+Skill lesson:
+
+Visible dense SVGs are strict assets, not optional detail. Visibility filters must consider opacity, not only display and nonzero rects. Device request width and root content width need separate accounting, and the browser request should include the measured gutter allowance before extraction. Special promo cards inside repeated grids require their own inventory pass.

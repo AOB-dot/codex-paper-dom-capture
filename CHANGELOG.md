@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.3 - 2026-06-18
+
+- Added self-directed source selection rules for capture batches without browser annotations.
+- Added interactive-state capture rules for mega menus, drawers, accordions, tabs, hover/open states, and cart states.
+- Added a required Skill Compliance Audit after each capture so long-running capture marathons do not drift away from the skill workflow.
+- Added selectable `capture-paper-dom-strict` and `capture-paper-dom-placeholder` skill entrypoints.
+- Added strict-vs-placeholder capture-mode gates so exact source capture and reusable scaffold capture cannot bleed into each other.
+- Updated the standard mobile target to Samsung Galaxy S24 Ultra `430 x 932`.
+- Added viewport request/content width accounting for browser scrollbar gutters.
+- Hardened strict SVG handling for dense inline product wordmarks, swatches, badges, and icon assets.
+- Added hover-state verification guidance requiring real post-hover visual evidence when CSS inspection is insufficient.
+- Added visibility filtering for `opacity:0`, hidden, clipped, and inactive carousel controls.
+- Added repeated-card special-case inventory guidance for promo, gift, upsell, bundle, featured, and expanded card types.
+
 ## v0.2 - 2026-06-16
 
 - Hardened the strict capture workflow after a detailed Bounti employee training footer review.
