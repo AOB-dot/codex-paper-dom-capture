@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4 - 2026-06-19
+
+- Added `capture-paper-snapshot-repair` as a separate skill entrypoint for fixing existing Paper Snapshot, MagicPath-style import, or AI-generated design-tool captures against the live source.
+- Added Snapshot Repair Mode to the shared contract so Codex starts from the selected Paper frame, builds a repair inventory, and patches conversion artifacts rather than rebuilding from scratch.
+- Documented snapshot-specific failure classes such as stacked inline text fragments, aggregate text boxes, missing micro-elements, unresolved SVGs, wrong media crops, visible hidden controls, boundary contamination, and incorrect hover/open states.
+- Added the Apple Store carousel pricing-fragment repair as a regression test case for one-line source text becoming stacked Paper fragments.
+- Updated viewport-gutter guidance so Playwright captures also measure and compensate for `15px` content-width loss when present, instead of treating it as Codex in-app-browser-only.
+- Added first-class manual range capture when browser annotation cannot select a section, including explicit start/stop landmarks and bounded composite roots.
+- Added strict handling for live video/MP4-backed sections: preserve measured structure and media provenance, while allowing representative still fallbacks when Paper cannot embed the moving video.
+- Added clipping guidance for closed or narrow carousel captions, requiring measured overflow-hidden wrapper frames when Paper text nodes spill past their lanes.
+- Added checks for title-cluster adornments, centered text groups, and breakpoint-specific CTA visibility.
+
 ## v0.3 - 2026-06-18
 
 - Added self-directed source selection rules for capture batches without browser annotations.

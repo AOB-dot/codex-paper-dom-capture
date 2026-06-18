@@ -219,6 +219,41 @@ Skill lesson:
 
 Interactive capture plans must verify state availability per breakpoint and per nav item. If the requested state does not exist on one item but does exist on another, record that distinction. CSS inspection alone is not enough for hover states; use a hover-capable verification path and capture the full post-hover state before drawing.
 
+## Apple Store Latest Carousel Snapshot Repair
+
+Source type:
+
+Public Apple Store carousel captured into Paper with a Snapshot/MagicPath-style tool.
+
+Reason it mattered:
+
+- the imported snapshot was visually close enough to keep
+- price/installment copy inside cards was split into many small DOM fragments
+- Paper stacked those fragments vertically instead of preserving the rendered one-line source text
+- visible cards and off-artboard carousel cards shared the same artifact class
+
+Observed miss:
+
+- card payment text such as `From $1099 or $45.79/mo. for 24 mo.` became separate stacked labels like `From $1099`, `or`, `$45.79`, `/mo.`, `for 24`, `mo.`
+
+Fixes added to skill:
+
+- add `capture-paper-snapshot-repair` as a separate slash-call candidate
+- start from the selected Paper frame rather than a blank rebuild
+- use the live source browser or Playwright as truth
+- inventory snapshot artifacts before editing
+- repair stacked inline fragments into editable no-wrap text when the source renders one line
+- check off-artboard carousel cards inside the selected frame, not only the visible first cards
+
+Additional viewport finding:
+
+- Playwright requested at `430 x 932` reported a `415px` page/content box on the Apple Store page.
+- Playwright requested at `445 x 932` reported the intended `430px` page/content box.
+
+Skill lesson:
+
+The `15px` scrollbar-gutter compensation is not only a Codex in-app browser issue. Any browser runtime used for capture, including Playwright, must record requested viewport and measured content/root widths, then re-request the viewport with gutter compensation before building Paper.
+
 ## Reusable Library Scaffold Asset Slots
 
 Source examples:
@@ -354,7 +389,7 @@ Findings from the strict capture:
 - The Dot product wordmarks and swatch rows were available as inline SVGs with no unresolved `<use>` references.
 - Rebuilding those wordmarks as editable text was a strict-mode miss. Dense inline SVG paths should be preserved as SVG layers/assets first.
 - The carousel right-arrow controls were present in the DOM with `display:flex`, but computed `opacity:0`. Capturing them as visible grey arrows created extra background arrows in the Paper desktop/mobile frames.
-- The initial `1440`, `430`, and `820` browser viewport requests all produced content/root widths that were `15px` narrower because the browser reserved a scrollbar gutter. For target capture widths of `1440`, `430`, and `820`, the in-app browser needed initial requests of `1455`, `445`, and `835`.
+- The initial `1440`, `430`, and `820` browser viewport requests all produced content/root widths that were `15px` narrower because the browser reserved a scrollbar gutter. For target capture widths of `1440`, `430`, and `820`, the browser runtime needed initial requests of `1455`, `445`, and `835`.
 - The mobile `Give The Gift Of Networking` card was a special expanded gift-card layout, not a normal product card. It needed a two-line source heading, actual `gift.card` SVG mark, rainbow strip, separate `Starting at`/price spans, and a top-right image crop. Reusing the normal product-card template missed those details.
 
 Expected behavior:
@@ -367,3 +402,36 @@ Expected behavior:
 Skill lesson:
 
 Visible dense SVGs are strict assets, not optional detail. Visibility filters must consider opacity, not only display and nonzero rects. Device request width and root content width need separate accounting, and the browser request should include the measured gutter allowance before extraction. Special promo cards inside repeated grids require their own inventory pass.
+
+## Manual Range Capture When Annotation Fails
+
+Source:
+
+`https://sakiproducts.com/pages/luna-kettle?Color=Matte%20Black`
+
+Representative range:
+
+Start at the section headed `Precision Temperature Control`. Continue through the gallery, `Brew Your Way with Precision Presets`, `Choose Your Brewing Style`, and the brewing-style cards. Stop before the next black section headed `All Stainless, Plastic Free`.
+
+Scenario:
+
+The in-app browser annotation button could not reliably select the requested section. The user described the visible start and stop landmarks instead of providing an annotation selector.
+
+Expected behavior:
+
+- The capture switches to Self-Directed Source Selection Mode instead of blocking on annotation.
+- The notes record that annotation failed and list the start marker, stop marker, URL, viewport requests, measured content widths, and included sibling roots.
+- The extraction may be a bounded composite range when the start copy and following media/card section live in separate sibling roots.
+- The Paper artboard height stops exactly before the `All Stainless, Plastic Free` section.
+- Sticky headers, sticky product buy bars, chat widgets, and other fixed page chrome visible while scrolling are excluded unless explicitly requested.
+- All standard variants are captured with the runtime-measured gutter rule: request `1455 x 900`, `445 x 932`, and `835 x 1180` when a `15px` gutter is observed, then verify measured content widths of `1440`, `430`, and `820`.
+- Real source assets are preserved in strict mode: gallery images, thumbnails, floating product images, and CSS `background-image` card art.
+- Horizontally overflowing card rows preserve their measured row width inside a clipped viewport rather than squeezing every card into the artboard.
+- The title-cluster icon immediately above `Precision Temperature Control` is included even though the user named the heading text as the range start.
+- The `Buy Now` CTA under `Brew Your Way with Precision Presets` is inventoried per breakpoint. It is hidden on mobile but visible in the tablet and desktop captures.
+- Tablet and other narrow carousel states preserve clipped closed-card captions. If Paper text spills past its box, the accepted repair is a measured overflow-hidden wrapper frame, not a wider text box or hidden overflow on the text node alone.
+
+Skill lesson:
+
+Annotation failure is a normal capture path, not a blocker. The skill needs a first-class manual range workflow based on live DOM landmarks and sibling boundaries, with explicit stop-marker exclusion and fixed/sticky chrome filtering.
+Manual range starts should include adjacent title-cluster adornments, and responsive CTAs need per-breakpoint inventory because breakpoint-gated button classes can differ from the surrounding text/media layout.

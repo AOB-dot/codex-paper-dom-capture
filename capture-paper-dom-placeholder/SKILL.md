@@ -18,6 +18,7 @@ This wrapper exists so the user can choose structure-first capture directly from
 - Add source-reference evidence next to the Paper capture for every placeholdered section or repeated card cluster.
 - Preserve generic UI controls and micro-elements normally; do not placeholder away arrows, chevrons, dividers, quantity controls, hairlines, badges, or functional icons.
 - Treat hidden controls as hidden: do not render `opacity:0`, clipped, inactive, or off-state carousel controls unless the named state makes them visible.
+- Preserve source clipping behavior for closed or narrow carousel captions even when media is placeholdered. Placeholder mode can simplify replaceable assets, but it must keep the measured clipped label lanes.
 - For hover/open states, verify the real live state visually before drawing it; CSS inspection alone is not enough.
 - Preserve repeated-card differences and slot roles instead of cloning one placeholder template across promo, gift, upsell, bundle, featured, or expanded variants.
 - Name outputs with `Placeholder Scaffold Capture`.

@@ -16,6 +16,7 @@ This wrapper exists so the user can choose strict capture directly from the slas
 - Do not use placeholders for source-specific visible assets.
 - Preserve visible inline SVGs as the actual extracted SVG first. Dense SVG paths are not a reason to approximate with editable text; try isolated inline SVG insertion or SVG asset import before any fallback.
 - Treat hidden controls as hidden: do not render `opacity:0`, clipped, inactive, or off-state carousel controls unless the named state makes them visible.
+- Preserve source clipping behavior for closed or narrow carousel captions. If labels disappear at a measured card boundary, use an explicit clipped wrapper frame; do not let Paper text spill into neighboring lanes.
 - For hover/open states, verify the real live state visually before drawing it; CSS inspection alone is not enough.
 - Preserve repeated-card differences instead of cloning one card template across promo, gift, upsell, bundle, featured, or expanded variants.
 - Use source-reference screenshots only as QA evidence beside the editable capture, never as replacements for missing layers.

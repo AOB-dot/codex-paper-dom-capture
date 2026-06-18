@@ -19,7 +19,7 @@ Use this skill to recreate a selected webpage section from the Codex in-app brow
 
 ## Device Set
 
-Always capture three target content-width variants of the same selected section unless the user explicitly narrows the request. Because the in-app browser can reserve a `15px` scrollbar gutter, request a viewport that is `15px` wider than the desired content width by default, then verify the measured content/root width before building Paper:
+Always capture three target content-width variants of the same selected section unless the user explicitly narrows the request. Browser automation runtimes, including the Codex in-app browser and Playwright, can reserve a `15px` scrollbar gutter on some pages. Request a viewport that is `15px` wider than the desired content width by default, then verify the measured content/root width before building Paper:
 
 - Laptop L target content: `1440 x 900`; initial browser request: `1455 x 900`
 - Mobile target content: Samsung Galaxy S24 Ultra `430 x 932`; initial browser request: `445 x 932`
@@ -27,7 +27,7 @@ Always capture three target content-width variants of the same selected section 
 
 Use tablet portrait by default because it is a meaningfully different responsive layout from laptop. Use iPad Air landscape target content `1180 x 820`, initial browser request `1195 x 820`, as an additional optional variant when the section is clearly landscape-led or when the user asks for tablet landscape.
 
-Viewport request size and captured content size are different facts. Always record the requested browser viewport, `window.innerWidth/innerHeight`, `visualViewport.width/height`, `documentElement.clientWidth`, `body.clientWidth`, scrollbar gutter, and the measured root rect. The desired capture widths are the target content widths above. If the first request does not produce the target content width, adjust the requested viewport by the measured gutter and re-extract before building Paper. Do not stretch or re-center a measured DOM capture into a wider Paper frame as if it had more layout space; that changes the proportional relationship of the section. For section-library/component captures, default the editable Paper artboard to the measured painted root/content width and include the requested viewport in notes or the artboard name. Use a full requested-width device shell only when intentionally showing browser/device context, and then preserve the measured content width inside it with the gutter/context represented separately.
+Viewport request size and captured content size are different facts. Always record the requested browser viewport, `window.innerWidth/innerHeight`, `visualViewport.width/height`, `documentElement.clientWidth`, `body.clientWidth`, scrollbar gutter, and the measured root rect for the runtime actually used. The desired capture widths are the target content widths above. If the first request does not produce the target content width, adjust the requested viewport by the measured gutter and re-extract before building Paper. Do not stretch or re-center a measured DOM capture into a wider Paper frame as if it had more layout space; that changes the proportional relationship of the section. For section-library/component captures, default the editable Paper artboard to the measured painted root/content width and include the requested viewport in notes or the artboard name. Use a full requested-width device shell only when intentionally showing browser/device context, and then preserve the measured content width inside it with the gutter/context represented separately.
 
 Name Paper outputs with the section/source plus device, for example:
 
@@ -41,9 +41,10 @@ Choose and record one capture mode before extracting any DOM.
 
 - **Strict DOM Capture Mode is the default.** Use it whenever the user invokes `$capture-paper-dom`, asks for a DOM capture, says strict, exact, faithful, clone, no placeholders, or does not explicitly request placeholders.
 - **Placeholder/Scaffold Capture Mode is opt-in.** Use it only when the user invokes `$capture-paper-dom-placeholder` or explicitly asks for placeholders, scaffolds, reusable section-library structure, adaptation slots, or future brand replacement.
+- **Snapshot Repair Mode is opt-in.** Use it only when the user invokes `$capture-paper-snapshot-repair` or explicitly asks to fix, repair, QA, clean up, or perfect an existing Paper Snapshot, MagicPath-style import, or AI-generated design-tool capture.
 - If the user invokes `$capture-paper-dom-strict`, force Strict DOM Capture Mode even inside a section-library or reusable-design-library capture marathon.
 - If the user says strict after a prior scaffold/library discussion, strict wins. Do not placeholder source-specific assets in that capture.
-- Record the mode in capture notes and in the completion audit. Use artboard names such as `Strict DOM Capture` or `Placeholder Scaffold Capture` so the mode is visible later.
+- Record the mode in capture notes and in the completion audit. Use artboard names such as `Strict DOM Capture`, `Placeholder Scaffold Capture`, or `Snapshot Repair` so the mode is visible later.
 
 ## Capture Method
 
@@ -60,12 +61,15 @@ Choose and record one capture mode before extracting any DOM.
    - Visible child boxes with relative `x`, `y`, `width`, `height`.
    - Computed `backgroundColor`, `color`, `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`, `textTransform`, `whiteSpace`, `textAlign`, `borderRadius`, borders, opacity, overflow, object-fit, shadows, filters, backdrop filters, and transforms.
    - Rendered text line geometry using `Range.getClientRects()` for text nodes or leaf text elements: text content, transformed/rendered casing, line count, per-line rectangles, and total text rect.
+   - Centered text-cluster geometry: parent/wrapper rects and leaf text/icon rects for eyebrow rows, heading groups, split-color subheads, and CTA labels. Preserve the group center, not just the leaf text x-position.
    - Image crop fields: `objectFit`, `objectPosition`, rendered image rect, natural dimensions when available, and parent clipping rect.
    - Background image crop fields: `backgroundImage`, `backgroundSize`, `backgroundPosition`, `backgroundRepeat`, and parent clipping rect.
    - Pseudo-elements via `getComputedStyle(el, "::before")` and `getComputedStyle(el, "::after")` when they have visible content, background, border, dimensions, gradient overlays, backdrop blur, blend modes, filters, or opacity.
    - Text content from actual text nodes/elements.
    - Image `currentSrc`, `src`, `alt`, object-fit, and measured rect.
    - Inline SVG outerHTML and referenced symbol definitions used by `<use>`.
+   - Continuous carousel/marquee evidence: animated track transforms, animation names/durations, repeated card groups, per-card width/gap, and the nearest stable card-boundary offset.
+   - When a selected section contains an auto-moving carousel or marquee, do not capture an arbitrary live animation moment as the final layout. Normalize the Paper capture to a deterministic card-aligned phase, usually by snapping one complete card to the row start while preserving the measured card size, gap, clipping, overflow edge, and repeated-card order. Record that normalization in the capture notes.
 7. Convert computed RGB/RGBA values to hex when alpha is 1. Preserve RGBA when alpha matters.
 8. Use the first non-transparent computed ancestor background for the Paper artboard background. Do not infer background color from selection overlays or screenshots.
 9. Recreate the section in Paper as editable layers using absolute measured positions when precision matters.
@@ -73,20 +77,22 @@ Choose and record one capture mode before extracting any DOM.
 
 ## Self-Directed Source Selection Mode
 
-Use this mode when the user asks for a capture batch, section library, or website-to-website capture marathon without browser annotations.
+Use this mode when the user asks for a capture batch, section library, or website-to-website capture marathon without browser annotations, or when the browser annotation UI cannot reliably select the requested section.
 
 1. Navigate in the Codex in-app browser to the source URL named by the capture plan.
 2. Identify candidate sections from stable DOM landmarks first: `header`, `nav`, `main`, `section`, `footer`, `dialog`, `aside`, `[role]`, `id`, stable `data-*` attributes, and meaningful heading text.
 3. Prefer the smallest DOM root that contains the complete visual section or state. Avoid selecting the whole page when a header, product block, menu drawer, carousel row, or footer wrapper is enough.
 4. Record the chosen selector, URL, viewport, scroll position, and why that root was chosen in the capture notes.
 5. If several candidate roots could match, take a lightweight DOM/screenshot read and choose the one whose measured rect and visible content match the plan item.
-6. For component captures such as headers, navbars, drawers, menus, cards, and cart states, crop the Paper artboard to the chosen root/state boundary. Do not include adjacent sibling sections, below/above hero pixels, or "source context" bands unless the capture item explicitly names a combined transition such as `header + hero`.
-7. For sticky/fixed headers, capture the header surface itself and any visual layers that belong to the header state. Treat the beginning of the next page section as a source-reference screenshot detail, not as a Paper layer in the header component.
-8. If the live screenshot includes a sliver from the next or previous section, label it as source context and exclude it from the editable Paper frame. This is a hard failure for headers, sticky navs, drawers, menus, and cards: a black hero edge below a header, a previous-section tail above a card row, or a footer strip below a drawer means the capture boundary is wrong.
-9. When the selected root is fixed, sticky, transformed, or visually shorter than its DOM container, measure both the DOM rect and the actual painted surface rect. Use the painted component rect for the Paper artboard unless the plan asks for the whole container.
-10. For section libraries, preserve source names in Paper artboard names: `Dot - Header - Laptop L - Strict DOM Capture`, `Bounti - Home Hero - S24 Ultra - Strict DOM Capture`, and similar.
-11. When a capture plan says one source is the backbone and another is a gap filler, obey that priority. Do not substitute unrelated inspiration while self-selecting sections.
-12. After each capture, include a short Skill Compliance Audit in the working notes or completion message:
+6. If annotation fails but the user describes a text range such as "from X until before Y," use heading/text landmarks plus adjacent sibling order to build a bounded composite range. The capture may span multiple sibling roots, but it must have an explicit start marker, stop marker, measured top/bottom, and reason for excluding the next section.
+7. For composite ranges, preserve each included root as a separate measured group inside one Paper artboard. Exclude the stop-marker section and any fixed/sticky page chrome unless the user explicitly asks for it.
+8. For component captures such as headers, navbars, drawers, menus, cards, and cart states, crop the Paper artboard to the chosen root/state boundary. Do not include adjacent sibling sections, below/above hero pixels, or "source context" bands unless the capture item explicitly names a combined transition such as `header + hero`.
+9. For sticky/fixed headers, capture the header surface itself and any visual layers that belong to the header state. Treat the beginning of the next page section as a source-reference screenshot detail, not as a Paper layer in the header component.
+10. If the live screenshot includes a sliver from the next or previous section, label it as source context and exclude it from the editable Paper frame. This is a hard failure for headers, sticky navs, drawers, menus, and cards: a black hero edge below a header, a previous-section tail above a card row, or a footer strip below a drawer means the capture boundary is wrong.
+11. When the selected root is fixed, sticky, transformed, or visually shorter than its DOM container, measure both the DOM rect and the actual painted surface rect. Use the painted component rect for the Paper artboard unless the plan asks for the whole container.
+12. For section libraries, preserve source names in Paper artboard names: `Dot - Header - Laptop L - Strict DOM Capture`, `Bounti - Home Hero - S24 Ultra - Strict DOM Capture`, and similar.
+13. When a capture plan says one source is the backbone and another is a gap filler, obey that priority. Do not substitute unrelated inspiration while self-selecting sections.
+14. After each capture, include a short Skill Compliance Audit in the working notes or completion message:
    - source URL and selected root/state recorded
    - capture mode recorded as strict or placeholder/scaffold
    - root boundary checked against adjacent sibling contamination
@@ -103,6 +109,7 @@ Use this mode by default. This is the correct mode for exact source-site capture
 - Preserve every visible source asset as source content, including product renderings, branded SVGs, wordmarks, logos, thumbnails, videos, photos, swatches, badges, stickers, masks, and decorative image layers.
 - Do not replace visible source-specific media or SVG/logo assets with placeholders.
 - Visible inline SVG wordmarks, swatch rows, badges, and icons must be preserved as the actual extracted SVG first. Dense SVG paths are not a reason to approximate with text or generic shapes. Try, in order: direct inline SVG insertion, isolated per-SVG Paper writes, local `paper-asset://` SVG import, then a faithful raster/image fallback. Only after those attempts fail may you simplify, and the completion audit must name the exact SVG, failed attempts, and fallback used.
+- For live video or MP4-backed sections, strict capture means strict measured structure, clipping, crop, overlay anatomy, caption placement, and source media provenance. If Paper cannot embed or render the video as an editable/live asset, use a convenient representative still or source screenshot fallback inside the measured media clip instead of spending excessive time chasing an exact animation frame. Record the MP4 URL, fallback type, and that the moving video itself is a known limitation.
 - Source-reference screenshots or strips may be added for QA, but they are evidence beside the editable capture, not substitutes for missing source layers.
 - If Paper cannot render or import a visible source asset directly, use the most faithful fallback available, such as the original raster/SVG asset, a clipped image frame, or recreated visible vector shape. Report the limitation explicitly.
 - For strict mode, the Layer Inventory Gate must end with every visible item either present as an editable/rendered Paper layer or listed as an explicit limitation. "Will be replaced later" is not a valid reason to omit or placeholder an item.
@@ -126,6 +133,34 @@ This mode still uses live DOM measurements and the normal capture gates. It chan
 - In Paper, make placeholders visually obvious but quiet: neutral fills, dashed borders, small role labels, and clipped media-slot frames are preferred over importing exact source brand art when that art will be replaced.
 - In the Skill Compliance Audit, say whether the capture used strict asset mode or section-library scaffold mode, list source-specific assets that were placeholdered, and confirm source-reference strips or necessary close-up tiles were placed or explain any missing evidence.
 
+## Snapshot Repair Mode
+
+Use this mode only when the user is starting from an existing Paper Snapshot, MagicPath-style import, or other AI/design-tool webpage capture that is already on the Paper canvas but contains conversion artifacts.
+
+This mode still uses live browser evidence as truth. It changes only the starting point: repair the selected Paper frame instead of rebuilding from a blank canvas.
+
+- Start from the selected Paper frame or the user-named Paper frame. If nothing is selected, ask the user to select the frame or identify the artboard before editing.
+- Open or reuse the matching source page in the Codex in-app browser. Use Playwright as backup when the in-app browser cannot hold hover states, cannot annotate, cannot evaluate the needed DOM, or cannot produce a reliable source screenshot.
+- Record the source URL, viewport, source scroll position, Paper frame name, and whether the repair is in-place or a new comparison frame.
+- Keep correct Paper layers. Do targeted repairs instead of deleting and rebuilding a whole snapshot unless the selected frame is too structurally wrong to salvage.
+- Build a repair inventory before editing. Common snapshot artifacts include:
+  - inline text fragments stacked vertically instead of flowing as one source line
+  - one aggregate text layer replacing several separately aligned source items
+  - source one-line text wrapping into multiple Paper lines
+  - missing button/icon boxes, diagonal arrows, separators, badges, stars, bullets, empty controls, selected rings, or hairlines
+  - unresolved SVG wordmarks, logos, icons, or `<use>` references
+  - wrong media crop, `object-position`, clipping, radius, or off-artboard carousel edge crop
+  - flattened frosted/glass/blurred surfaces
+  - hidden/off-state controls rendered as visible layers
+  - adjacent section contamination inside a component snapshot
+  - hover/open/dropdown states captured as their closed/default state
+- For broken inline text fragments, inspect the live source line membership, computed font styles, and source text rect. Replace the broken Paper fragments with editable text that preserves the source line count and uses `white-space: nowrap` when the source is one line.
+- For card repairs, inspect every distinct card type in the selected frame, including off-artboard carousel cards that remain inside the frame.
+- For strict snapshot repair, preserve real source assets and SVGs just as strict mode would.
+- For placeholder/scaffold snapshot repair, preserve measured structure and placeholder slots while maintaining source-reference evidence.
+- After each meaningful patch, screenshot the Paper frame and compare it with the live source at the same viewport and scroll position.
+- In the Skill Compliance Audit, state that Snapshot Repair Mode was used, list each artifact class fixed, and identify any remaining limitation or area that needs a stricter rebuild.
+
 ## Interactive State Capture
 
 Menus, drawers, accordions, hover panels, tabs, carts, and other open/active states are first-class captures.
@@ -139,7 +174,7 @@ Menus, drawers, accordions, hover panels, tabs, carts, and other open/active sta
 - For cart states, capture empty and filled states separately. Preserve quantity steppers, remove controls, price rows, upsells, checkout buttons, shadows, dividers, and disabled/enabled button states.
 - For hover states, prefer an open/clickable or forced state when the site exposes one. If a true hover-only state must be captured, record it as hover-state evidence and report any limitation.
 - If the in-app browser bridge cannot physically hold a hover state, use a hover-capable browser path to verify the state visually before drawing it. CSS inspection alone is not enough: the real state may be driven by JavaScript classes, a moving nav-line, or a hidden menu surface becoming visible. Capture a post-hover screenshot/snapshot, inspect visible state roots, then recreate the complete visible state.
-- Do not transfer viewport-gutter assumptions between browser runtimes. The Codex in-app browser may need a `15px` wider request to achieve a target content width, while a separate Playwright browser may report true viewport/content geometry differently. Record the measured widths for the runtime actually used.
+- Do not assume any browser runtime gives target content width just because the requested viewport matches the target. The Codex in-app browser and Playwright can both need a `15px` wider request to achieve a target content width on pages with visible scrollbars or reserved gutters. Record the measured widths for the runtime actually used, then adjust and re-measure before capturing.
 
 ## Fidelity Rules
 
@@ -158,6 +193,7 @@ Menus, drawers, accordions, hover panels, tabs, carts, and other open/active sta
 - If the source font is unavailable in Paper, use the closest available fallback and tell the user. Map weights from both computed `fontWeight` and the font family name: family names such as `Graphik Medium`, `Graphik Semibold`, `Inter Medium`, or `Inter Semibold` often encode the intended weight even when computed CSS reports `400`. Use Medium as `500`, Semibold as `600`, Bold as `700`, and Regular/Book as `400` unless direct evidence says otherwise.
 - Preserve alpha text colors. For example, if a hollow-looking statistic is computed as `rgba(0,0,0,0.25)` with no stroke, recreate that alpha color rather than inventing a stroke.
 - Match line breaks from the rendered layout. When font fallback causes wrapping differences, adjust text box width, font size, or explicit line breaks to match the source visual.
+- Preserve centered header and title clusters by their measured parent/wrapper center. If an eyebrow row combines an icon plus text, or a subheading is split into dark and muted lines, center the whole row/line on the source axis rather than positioning the Paper layer from the text leaf's own `x` value.
 - Preserve rendered casing, not just DOM text casing. Extract `text-transform` and compare rendered text. If the source visually shows uppercase labels or title chips, the Paper layer must show uppercase even when the DOM text is title case or lowercase.
 - Check source text rect height and line count against Paper output. If source copy is a single rendered line, such as newsletter helper text, keep it on one line in Paper by widening the text box, preserving measured position where possible, or making the smallest acceptable fallback adjustment.
 - Preserve rendered line count for card descriptions and captions too. If the source card copy is two lines, do not accept a three-line Paper wrap unless you report it as a limitation; first widen the text box, reduce fallback font size slightly, or split the text into measured line layers.
@@ -177,6 +213,7 @@ Before building each Paper variant, create a short layer inventory from the extr
 - buttons, including outer surface, text label, nested icon box, arrow/icon glyph, shadow, radius, and internal spacing
 - card-internal overlay items such as title chips, badges, labels, callout boxes, sent-to/metadata pills, language selectors, progress bars, frosted/glass chips, and mini controls
 - all leaf text nodes that are visually unique, not just aggregate container text
+- heading-cluster adornments such as icon-font `<i>` elements, small SVGs, badges, eyebrow icons, and decorative marks that visually belong to the title even when the user names only the heading text as the range start
 - all rendered text transforms and line membership for labels, chips, headings, and captions
 - repeated nav/footer columns and every visible column heading/item
 - legal links, social links, copyright text, and their separate alignments/colors
@@ -197,6 +234,8 @@ Repeated cards need a second, local checklist after the section-level inventory.
 - Preserve text line count inside cards. Use source text rect height divided by line-height as the expected line count, then compare the Paper screenshot. Fix two-line-to-three-line and one-line-to-two-line regressions before finishing.
 - Preserve card image subject placement. Compare the source card crop and Paper crop side by side; if a subject, object edge, or focal point shifts materially, adjust image scale/offset inside a clipped frame instead of accepting copied CSS values.
 - For carousel or horizontally overflowing card rows, capture off-artboard cards only when they are part of the measured selected root, but still preserve the visible crop at the artboard edge.
+- For collapsed, closed, or narrow carousel cards, preserve caption clipping exactly. When the source label lane clips text at the card boundary, recreate it with a measured `overflow:hidden` wrapper frame whose width matches the card/caption lane, then place the text inside that wrapper. Do not rely on text-node width alone; Paper text can still paint past its box and spill into neighboring card labels.
+- For auto-moving carousel/marquee rows, freeze or reconstruct a stable card-boundary phase rather than accepting the current transform. The accepted strict output should show an intentional snapped state, not a random partial-card position caused by animation timing.
 - If a dense SVG panel is too large to inline, first try preserving it as the original SVG/image asset through smaller isolated writes or a local SVG asset import. If you must simplify it into editable shapes, report exactly which panel was simplified, which preservation attempts failed, and why.
 - Do not assume every card in a repeated grid shares the same internal anatomy. Promo, gift, upsell, bundle, featured, or expanded cards often have different heading wraps, asset positions, SVG marks, price spans, gradient strips, and image crops. Treat each distinct card type as its own local inventory item instead of cloning the neighboring product-card template.
 
@@ -213,6 +252,7 @@ For each device variant:
 7. Split mixed-opacity or mixed-color text into separate editable layers when Paper cannot preserve inline spans cleanly.
 8. Add a component anatomy pass:
    - Buttons must include their measured outer surface, label, nested icon/arrow container, icon glyph, shadow, border radius, and spacing.
+   - Check button/CTA presence per breakpoint. A CTA can be hidden on mobile, visible on tablet, and visible on desktop; do not infer one variant from another.
    - Footer and nav areas must preserve logos, column headings, column items, legal links, social links, divider lines, and separate alignment lanes.
    - Cards must include title chips, badges, media overlays, metadata/sent-to boxes, language selectors, progress bars, and any floating panels above images.
    - Do not collapse legal/social/footer text into a single editable paragraph when the source uses separate positions or colors.
@@ -251,9 +291,14 @@ For each device variant:
 ## Known Snags
 
 - Browser annotation overlays can tint the selected section. Always use computed backgrounds, not screenshot color sampling.
+- Browser annotation controls can fail to select a section on some pages. Do not block on the UI when the user can describe the target range. Switch to Self-Directed Source Selection Mode, identify start/stop landmarks from live DOM text and sibling order, and record that annotation failure was the reason for manual range selection.
+- Some requested captures are not one DOM root. If the requested section starts in one sibling and continues through the next sibling until before a named following section, build a bounded composite range and stop exactly before the following section. Fixed/sticky headers, sticky buy bars, chat bubbles, and other page chrome visible during scrolling are excluded unless explicitly requested.
 - Some sites shadow browser globals such as numeric parsing helpers. Use explicit `Number(String(value).replace("px", ""))` style conversion in page `evaluate` code.
 - Some browser plugin read-only page scopes do not expose `NodeFilter`, `document.createTreeWalker`, or `document.createRange`. Do not abandon the capture when these are missing. Fall back to recursive `childNodes` traversal using `nodeType === 3` for text nodes, and if `createRange()` is unavailable, use leaf text element rectangles plus source-vs-Paper screenshot QA for line-break verification. Report that rendered text line geometry used the fallback path.
-- Browser viewport overrides can request `430px` while the page's visual/content width is `415px` because the scrollbar gutter consumes `15px`. For the standard target widths, start by requesting `1455`, `445`, and `835` so the measured content widths land at `1440`, `430`, and `820`. Record request and content sizes separately, and adjust if a page/browser reports a different gutter. Do not expand a measured narrower capture to the target width after extraction; re-extract at the corrected requested viewport instead.
+- Paper Snapshot and MagicPath-style imports may split inline DOM into many absolutely positioned or nested text fragments. When source text should be one line, do not accept stacked fragments in Paper. Repair them into one editable text line using live-source line membership and no-wrap behavior, then screenshot QA the frame.
+- Paper text nodes may paint beyond their assigned width, even when width and overflow are set. For source labels that intentionally disappear at a narrow card, tab, or closed carousel boundary, hide or replace spill-prone text nodes with measured wrapper frames that clip overflow, then verify in a Paper screenshot.
+- Snapshot imports can preserve the broad visual hierarchy while corrupting small structure. Treat missing micro-controls, unresolved SVGs, wrong crops, visible hidden controls, and adjacent section contamination as repairable conversion artifacts rather than harmless differences.
+- Browser viewport overrides can request `430px` while the page's visual/content width is `415px` because the scrollbar gutter consumes `15px`; this can happen in Playwright as well as the Codex in-app browser. For the standard target widths, start by requesting `1455`, `445`, and `835` so the measured content widths land at `1440`, `430`, and `820`. Record request and content sizes separately, and adjust if a page/browser reports a different gutter. Do not expand a measured narrower capture to the target width after extraction; re-extract at the corrected requested viewport instead.
 - DOM extraction may produce both useful leaf text and noisy aggregate container text. Filter aggregate text, but preserve tiny non-text UI controls.
 - Paper font fallback can change text wrapping. Prefer measured positions, then widen text boxes or reduce size only enough to match the source layout.
 - A browser comment selector can point to a broader DOM root than the visible outlined region implies. If the selected root includes below-fold content such as a footer, product list, or newsletter area, capture the measured root unless the user narrows the request, and mention the selector breadth in the completion message.
@@ -263,15 +308,19 @@ For each device variant:
 - Dense product/logo wordmarks can be inline SVGs with no `<use>` references. Strict mode still requires preserving the extracted SVG, not rebuilding it as similar-looking text. Approximation is a fallback after failed SVG insertion/import attempts, not a first pass.
 - Hover-only nav states can be JavaScript-driven menus rather than CSS-only deltas. If automation cannot hover the item directly in the in-app browser, verify in a hover-capable browser and compare post-hover screenshots/snapshots before deciding whether the state is only an underline, a full dropdown, a dimmed overlay, or another surface.
 - Carousel arrow controls can appear in the DOM with `display:flex` but `opacity:0`. Treat opacity-zero arrows as hidden off-state controls unless the requested state explicitly shows them. If captured accidentally, remove them and update the skill/test notes.
+- Continuous marquee carousels can show different partial cards depending on timing. Treat the moving transform as state evidence, then normalize to a reproducible full-card-aligned phase unless the user explicitly asks for that exact animation frame.
 - Commercial-looking footer captures often fail by grouping text into visual paragraphs. Preserve separate measured text layers when source items occupy separate columns or alignment lanes.
 - Repeated marketing cards hide many details inside each card. Title chips, sent-to callouts, language selectors, progress bars, and overlay scrims are not decorative noise; they must be inventoried and checked per card.
 - `object-fit: cover` is incomplete without `object-position` and parent clipping. If a card image looks shifted after capture, the extraction likely preserved the URL but lost the rendered crop.
 - Font fallback failures are often local, not global: a card description can change from two lines to three while the heading looks correct. QA line counts for card text, captions, and labels, not just hero headings.
 - Line-count checks are not enough for headings. A heading can still have the right number of lines while the wrong word moves to the next line; compare the actual words on each source line.
+- Centered flex rows can drift if Paper positions from a leaf text rect instead of the full row wrapper. For icon+label eyebrow rows and split subheadings, compare the row center to the artboard/source center after screenshot QA.
 - CSS `text-transform` can make source labels uppercase even when DOM text is not uppercase. Capture rendered casing for chips, labels, headings, nav items, and buttons.
 - Frosted chips can look like plain translucent pills if `backdrop-filter`, filter blur, gradient overlays, and alpha fills are skipped. Treat glass/iced surfaces as first-class layers.
 - Copied media CSS can still render differently in Paper. When subject placement matters, compare source and Paper crops visually and use explicit clipped-frame offsets if Paper's object positioning does not match.
 - Automatic self-directed selection can accidentally preserve visible context outside the target, especially below sticky headers. Use root/sibling rect evidence and painted-surface bounds to separate component content from page context before writing Paper layers.
+- When a user describes a range starting at a heading, include nearby pre-heading title adornments that are visually part of that heading group. Icon-font `<i>` nodes may render through private-use glyphs; if Paper cannot use the source icon font, use inline SVG extraction/import or a faithful small vector/raster fallback and report it.
+- Responsive CTA visibility can differ from text and media visibility. Inventory buttons and links separately at every captured viewport, especially when source classes use breakpoint gates such as `hidden`, `md:flex`, or `lg:hidden`.
 
 ## Browser Setup Reminder
 
@@ -291,7 +340,7 @@ Then use `tab.playwright.evaluate(...)` for read-only DOM extraction.
 Report:
 
 - Which capture mode was used.
-- Which three device variants were created.
+- Which three device variants were created, or which selected Paper frame was repaired in Snapshot Repair Mode.
 - Requested viewport size and measured visual/content/root sizes, including any scrollbar gutter such as `430px requested -> 415px content`.
 - Which selector/state boundary was used, and whether adjacent sibling contamination was checked.
 - The effective computed background color used.
@@ -304,4 +353,5 @@ Report:
 - Any rendered casing/text-transform adjustments made for labels, chips, or headings.
 - Any media crop adjustments or card-internal overlay simplifications.
 - Any frosted/glass/backdrop-filter approximations.
+- Any snapshot repair artifacts fixed, such as stacked inline text fragments, missing micro-elements, incorrect state, or adjacent section contamination.
 - Any known limitation such as video/canvas/WebGL content, clipped offscreen animation states, or remote assets Paper could not render.

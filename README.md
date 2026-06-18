@@ -4,7 +4,7 @@ High-fidelity editable DOM-to-design capture using the Codex in-app browser and 
 
 `capture-paper-dom` is a Codex skill for recreating live webpage sections as editable frames in Paper.design. It uses Codex's controllable in-app browser to inspect the rendered DOM, extract computed styles, and write structured layers into a design canvas instead of flattening the result into a screenshot.
 
-This is version `0.3`: a public skill package with selectable strict and placeholder/scaffold capture modes, documented from real capture work and intended to improve through practical misses and repeatable test cases.
+This is version `0.4`: a public skill package with selectable strict, placeholder/scaffold, and snapshot-repair capture modes, documented from real capture work and intended to improve through practical misses and repeatable test cases.
 
 ## Why This Exists
 
@@ -68,12 +68,12 @@ Copy the skill folder into your Codex skills directory:
 
 ```bash
 mkdir -p ~/.codex/skills
-cp -R capture-paper-dom ~/.codex/skills/
+cp -R capture-paper-dom capture-paper-dom-strict capture-paper-dom-placeholder capture-paper-snapshot-repair ~/.codex/skills/
 ```
 
-Then start a new Codex session and ask to use `$capture-paper-dom` against a selected browser section.
+Then start a new Codex session and ask to use `$capture-paper-dom`, `$capture-paper-dom-strict`, `$capture-paper-dom-placeholder`, or `$capture-paper-snapshot-repair`.
 
-The root `capture-paper-dom/` folder is the installable Codex skill. Project-level docs, issue templates, and release notes live outside that folder so the skill stays small enough to load efficiently.
+The `capture-paper-dom/` folder contains the shared contract. The other skill folders are thin selectable wrappers. Project-level docs, issue templates, and release notes live outside those folders so the skills stay small enough to load efficiently.
 
 ## Selectable Capture Modes
 
@@ -82,6 +82,9 @@ The default skill is strict unless placeholders are explicitly requested:
 - `$capture-paper-dom`: shared workflow, strict by default.
 - `$capture-paper-dom-strict`: force exact source capture with real source images, SVGs, logos, media, and micro-details.
 - `$capture-paper-dom-placeholder`: force structure-first scaffold capture for reusable section libraries and future brand replacement. Source-specific assets become measured placeholders with nearby source-reference evidence.
+- `$capture-paper-snapshot-repair`: repair an existing Paper Snapshot, MagicPath-style import, or AI-generated webpage capture by comparing the selected Paper frame against the live source and patching conversion artifacts.
+
+Snapshot repair is for cases where an import is close enough to keep but has typical capture-tool problems: stacked inline text fragments, missing tiny controls, unresolved SVGs, wrong image crops, visible hidden controls, or adjacent-section contamination. It starts from the selected Paper frame, uses the live browser or Playwright as truth, and makes targeted fixes instead of recreating the section from scratch.
 
 ## Requirements
 
@@ -106,7 +109,7 @@ This repository intentionally excludes private project names, local filesystem p
 
 ## Status
 
-`v0.3` is a working skill package with strict, placeholder/scaffold, and chooser entrypoints. The near-term roadmap is to make captures more repeatable with capture reports, saved style snapshots, and a regression suite around known fidelity traps.
+`v0.4` is a working skill package with strict, placeholder/scaffold, snapshot-repair, and chooser entrypoints. The near-term roadmap is to make captures more repeatable with capture reports, saved style snapshots, and a regression suite around known fidelity traps.
 
 ## License
 

@@ -11,16 +11,20 @@ Use this checklist for every capture before calling the result done.
 - Placeholder/scaffold mode is used only by explicit request or `$capture-paper-dom-placeholder`.
 - Placeholder/scaffold mode keeps measured structure while replacing source-specific assets with role-labeled placeholders and nearby source-reference evidence.
 - If a user asks for strict capture inside a reusable-library project, strict wins for that capture.
+- Snapshot repair mode is used only by explicit request or `$capture-paper-snapshot-repair`.
+- Snapshot repair starts from a selected or named Paper frame and uses the live source page as truth for targeted fixes.
 
 ## Layout
 
 - Target section dimensions match measured DOM rect.
 - If no annotation was provided, the chosen selector is the smallest complete DOM root for the planned section/state.
+- If annotation failed or the user described a manual range, the capture notes record the start landmark, stop landmark, included sibling roots, measured top/bottom, and why annotation was bypassed.
+- Composite ranges that span multiple sibling roots keep those roots as separate measured groups inside one Paper artboard and stop before the named next section.
 - Component captures are cropped to the selected root/state boundary; no adjacent hero, footer, previous section, or next section pixels are included unless the capture explicitly asks for a combined transition.
 - Root boundary evidence is recorded for component captures: root rect, painted surface rect when different, visible previous/next sibling rects, and any fixed/sticky/portal layers intentionally included.
 - A boundary contamination check has passed: no black hero sliver below a header, previous-section tail above a card row, next-section strip below a drawer/menu, or other source-context pixels are present in the editable Paper artboard.
 - Source URL, selector, viewport, scroll position, and state recipe are recorded.
-- Requested viewport, `innerWidth`, `visualViewport`, document/client width, body width, root rect width, and scrollbar gutter are recorded. Standard target content widths are `1440`, `430`, and `820`; initial browser requests should be `1455`, `445`, and `835` to allow for the observed `15px` gutter.
+- Requested viewport, `innerWidth`, `visualViewport`, document/client width, body width, root rect width, and scrollbar gutter are recorded for the browser runtime actually used. Standard target content widths are `1440`, `430`, and `820`; initial in-app browser or Playwright requests should be `1455`, `445`, and `835` when a `15px` gutter is observed.
 - If the measured content/root width misses the target width, the viewport request is adjusted and the DOM is re-extracted. Do not stretch a narrower Paper capture after extraction to make it look like the target width.
 - Paper artboards for section-library/component captures use the measured target content/root width, not the wider browser request width, unless a separate device shell/gutter context is intentionally represented.
 - Interactive state availability is verified per breakpoint; no-open or navigate-only behavior is recorded instead of inventing a missing menu/drawer/hover state.
@@ -31,6 +35,7 @@ Use this checklist for every capture before calling the result done.
 - Background surfaces extend to the same edges as the source.
 - Overflow and clipping match the source where visible.
 - If source context is needed for QA, it is kept in notes/screenshots rather than as editable Paper layers.
+- Sticky/fixed page chrome, chat widgets, product buy bars, and browser UI overlays are excluded from a section capture unless the user explicitly requested those states.
 
 ## Layer Inventory
 
@@ -39,7 +44,9 @@ Before building each variant, list the visible source inventory and check it off
 - Background media and section-wide images are present.
 - All logos, images, inline SVGs, and SVG `<use>` references are present or explicitly reported.
 - Buttons preserve their surface, label, icon/arrow box, icon glyph, shadow, radius, and spacing.
+- Button and link visibility is checked per breakpoint; do not infer tablet/mobile CTA presence from desktop.
 - Card-internal overlays such as title chips, sent-to boxes, metadata pills, language selectors, progress bars, and floating panels are accounted for.
+- Heading-cluster adornments such as pre-heading icons, small SVGs, icon-font `<i>` nodes, badges, and decorative marks are included when they visually belong to the requested heading/range start.
 - Footer/nav columns preserve every heading and visible item.
 - Legal links, social links, and copyright text keep separate positions, colors, and alignment lanes.
 - Hairlines, separators, pseudo-elements, badges, bullets, stars, and empty controls are accounted for.
@@ -59,6 +66,28 @@ Use this section only when the user explicitly wants a reusable library scaffold
 - No design element disappears just because its content is placeholdered; every logo/media/SVG slot remains visible and labeled.
 - Generic UI controls and micro-elements remain rendered normally, not placeholdered away.
 - The completion audit lists which assets were placeholdered, why, and where the source-reference strip or necessary close-up tile was placed.
+
+## Snapshot Repair Mode
+
+Use this section only when repairing an existing Paper Snapshot, MagicPath-style import, or AI-generated design-tool capture.
+
+- The selected or user-named Paper frame is identified before editing.
+- The source URL, viewport, scroll position, and matching live browser state are recorded.
+- The repair is declared as in-place or a new comparison frame.
+- Correct existing Paper layers are preserved; only broken areas are patched unless a rebuild is clearly faster or more faithful.
+- A repair inventory is created before editing.
+- Inline source text that should be one line is not left as stacked Paper fragments; it is repaired into editable no-wrap text with source-matched line membership.
+- Aggregate Paper text boxes are split when the source uses separately aligned items with different positions, colors, weights, or lanes.
+- Missing micro-elements such as separators, badges, stars, empty controls, selected rings, hairlines, and button icon boxes are restored.
+- Unresolved SVG wordmarks, logos, icons, or `<use>` references are repaired with real SVGs/assets or explicitly reported.
+- Media crop, clipping, radius, and off-artboard carousel edge crops are checked against the live source.
+- Flattened frosted/glass/blurred surfaces are restored or reported as approximated.
+- Hidden or off-state controls are removed when the live state does not show them.
+- Component boundary contamination is cropped out of the editable frame.
+- Hover/open/dropdown states are restored in the live browser before patching; default-state screenshots are not accepted as hover-state evidence.
+- Every distinct card type inside the selected frame is checked, including off-artboard carousel cards that remain inside the frame.
+- Paper screenshot QA is performed after meaningful repairs.
+- The completion audit lists artifact classes fixed and any remaining limitation.
 
 ## Backgrounds
 
@@ -106,6 +135,7 @@ For each repeated card:
 - Floating callouts such as sent-to boxes, language selectors, progress bars, and metadata pills are present.
 - Card title and description line counts match the source.
 - Off-artboard carousel cards preserve the visible edge crop.
+- Closed or narrow carousel/card captions clip at the measured lane boundary and do not spill into neighboring labels; use wrapper frames when Paper text nodes paint past their width.
 - Dense SVG/image panels are preserved as original assets when full editable recreation is impractical; any simplification is reported.
 
 ## Buttons
@@ -235,11 +265,14 @@ After building in Paper:
 - patch with targeted edits
 - update this project with any repeated miss pattern
 
+For snapshot repair, screenshot the repaired Paper frame after each meaningful patch and compare it to the live source at the same viewport and scroll position.
+
 ## Skill Compliance Audit
 
 After each capture, check and record:
 
 - `capture-paper-dom` was explicitly used.
+- If snapshot repair was used, `$capture-paper-snapshot-repair` or Snapshot Repair Mode was explicitly recorded.
 - Required device variants were captured or the narrowing was user-requested.
 - Layer inventory was created before building.
 - Paper screenshot QA was performed against the live source.
